@@ -29,7 +29,7 @@
     "expo-status-bar": "~2.0.1",
     "expo-system-ui": "~4.0.9",
     "expo-web-browser": "~14.0.2",
-    "firebase": "^11.6.0",
+    "firebase": "^11.6.1",
     "firebase-admin": "^13.2.0",
     "metro": "^0.81.4",
     "metro-config": "^0.81.4",
