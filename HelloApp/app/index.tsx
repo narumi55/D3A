@@ -1,42 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { getUserUid } from "../src/utils/storage"; // UID を取得する関数
 import AccountModal from "./(tabs)/AccountModal";
-
-// Firebase 設定
-const firebaseConfig = {
-  apiKey: "AIzaSyDudCiLk-5snt7bXPUCKTGfNW0FR6DIPPc",
-  authDomain: "helloapp-8f0ac.firebaseapp.com",
-  databaseURL: "https://helloapp-8f0ac-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "helloapp-8f0ac",
-  storageBucket: "helloapp-8f0ac.firebasestorage.app",
-  messagingSenderId: "4644371365",
-  appId: "1:4644371365:web:89d1e7d4e7685cc566064c",
-  measurementId: "G-VD45YP8P63"
-};
-
-// Firebase 初期化
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
 const App = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [userUid, setUserUid] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // ログイン状態を監視
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser); // ユーザー情報をステートに設定
-    });
+    const fetchUserUid = async () => {
+      try {
+        // AsyncStorage から UID を取得
+        const uid = await getUserUid();
+        if (uid) {
+          console.log("取得した UID:", uid);
+          setUserUid(uid);
+        } else {
+          console.log("ユーザー UID が見つかりません。");
+          setUserUid(null);
+        }
+      } catch (error) {
+        console.error("UID の取得中にエラーが発生しました:", error);
+      }
+    };
 
-    return () => unsubscribe(); // クリーンアップ
+    fetchUserUid();
   }, []);
 
   const toggleModal = () => {
-    setIsModalOpen(!isModalOpen);
+    setIsModalOpen((prev) => !prev);
   };
 
   return (
@@ -44,7 +38,7 @@ const App = () => {
       {/* Header */}
       <View style={styles.header}>
         <Button
-          title={user ? user.displayName || "アカウント" : "アカウント登録"}
+          title={userUid ? `UID: ${userUid}` : "アカウント登録"}
           onPress={toggleModal}
         />
       </View>
@@ -53,7 +47,10 @@ const App = () => {
       <Text style={styles.title}>D3A</Text>
 
       {/* Start Button */}
-      <Button title="はじめる" onPress={() => router.push("./(tabs)/home")} />
+      <Button
+        title="はじめる"
+        onPress={() => router.push("./(tabs)/home")}
+      />
 
       {/* Modal */}
       <AccountModal visible={isModalOpen} toggleModal={toggleModal} />

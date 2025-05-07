@@ -52,9 +52,10 @@ app.post("/api/register", async (req, res) => {
       createdAt: Date.now(),
     });
 
+    // `uid` を含むレスポンスを送信
     res.status(201).json({
       message: "User registered successfully",
-      uid: userRecord.uid,
+      uid: userRecord.uid, // UID をクライアントに返す
     });
   } catch (error) {
     console.error("Error registering user:", error);

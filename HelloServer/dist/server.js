@@ -54,9 +54,10 @@ app.post("/api/register", (req, res) => __awaiter(void 0, void 0, void 0, functi
             stylePreference,
             createdAt: Date.now(),
         });
+        // `uid` を含むレスポンスを送信
         res.status(201).json({
             message: "User registered successfully",
-            uid: userRecord.uid,
+            uid: userRecord.uid, // UID をクライアントに返す
         });
     }
     catch (error) {
