@@ -65,6 +65,24 @@ app.post("/api/register", (req, res) => __awaiter(void 0, void 0, void 0, functi
         res.status(500).json({ error: "Failed to register user" });
     }
 }));
+app.get("/api/user/:uid", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { uid } = req.params;
+        // Realtime Databaseからユーザー情報を取得
+        const userRef = db.ref("users").child(uid);
+        const snapshot = yield userRef.once("value");
+        if (snapshot.exists()) {
+            res.status(200).json(snapshot.val());
+        }
+        else {
+            res.status(404).json({ error: "User not found" });
+        }
+    }
+    catch (error) {
+        console.error("Error fetching user data:", error);
+        res.status(500).json({ error: "Failed to fetch user data" });
+    }
+}));
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });

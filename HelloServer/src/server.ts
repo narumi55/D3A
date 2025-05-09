@@ -63,6 +63,26 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
+app.get("/api/user/:uid", async (req, res) => {
+  try {
+    const { uid } = req.params;
+
+    // Realtime Databaseからユーザー情報を取得
+    const userRef = db.ref("users").child(uid);
+    const snapshot = await userRef.once("value");
+
+    if (snapshot.exists()) {
+      res.status(200).json(snapshot.val());
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ error: "Failed to fetch user data" });
+  }
+});
+
+
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

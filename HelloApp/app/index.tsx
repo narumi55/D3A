@@ -1,36 +1,52 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { getUserUid } from "../src/utils/storage"; // UID を取得する関数
-import AccountModal from "./(tabs)/AccountModal";
+import { fetchUserData } from "../src/api/userGet";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import AccountModal from "./(tabs)/AccountModal"; // 別のモーダル用コンポーネント
+import ProfileModal from "./(tabs)/ProfileModal"; // 新しく遷移するモーダル用コンポーネント
 
 const App = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [userUid, setUserUid] = useState<string | null>(null);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const [userUid, setUserUid] = useState<string | null>(null); // UID を管理
   const router = useRouter();
 
   useEffect(() => {
-    const fetchUserUid = async () => {
+    const fetchUsername = async () => {
       try {
-        // AsyncStorage から UID を取得
-        const uid = await getUserUid();
+        const uid = await AsyncStorage.getItem("userUid"); // UID を AsyncStorage から取得
+        setUserUid(uid); // UID をステートに保存
         if (uid) {
           console.log("取得した UID:", uid);
-          setUserUid(uid);
+
+          // 分離した API を使用してユーザー情報を取得
+          const userData = await fetchUserData(uid);
+          setUsername(userData ? userData.username : null);
         } else {
-          console.log("ユーザー UID が見つかりません。");
-          setUserUid(null);
+          console.log("UID が見つかりません");
+          setUsername(null);
         }
       } catch (error) {
-        console.error("UID の取得中にエラーが発生しました:", error);
+        console.error("データ取得中にエラーが発生しました:", error);
       }
     };
 
-    fetchUserUid();
+    fetchUsername();
   }, []);
 
-  const toggleModal = () => {
-    setIsModalOpen((prev) => !prev);
+
+  const toggleAccountModal = () => {
+    setIsAccountModalOpen((prev) => !prev);
+  };
+
+  const openProfileModal = () => {
+    setIsProfileModalOpen(true);
+  };
+
+  const closeProfileModal = () => {
+    setIsProfileModalOpen(false);
   };
 
   return (
@@ -38,8 +54,8 @@ const App = () => {
       {/* Header */}
       <View style={styles.header}>
         <Button
-          title={userUid ? `UID: ${userUid}` : "アカウント登録"}
-          onPress={toggleModal}
+          title={username ? `ユーザー: ${username}` : "アカウント登録"}
+          onPress={username ? openProfileModal : toggleAccountModal}
         />
       </View>
 
@@ -52,8 +68,11 @@ const App = () => {
         onPress={() => router.push("./(tabs)/home")}
       />
 
-      {/* Modal */}
-      <AccountModal visible={isModalOpen} toggleModal={toggleModal} />
+      {/* Account Modal */}
+      <AccountModal visible={isAccountModalOpen} toggleModal={toggleAccountModal} />
+
+      {/* Profile Modal */}
+      <ProfileModal visible={isProfileModalOpen} closeModal={closeProfileModal} uid={userUid} />
     </View>
   );
 };
