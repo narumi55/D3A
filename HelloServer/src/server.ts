@@ -10,9 +10,9 @@ const PORT = 3000;
 // CORS と JSON ボディパーサーの設定
 app.use(
   cors({
-    origin: "*", // 必要に応じて特定のドメインに制限
-    methods: ["GET", "POST"], // 許可するHTTPメソッド
-    allowedHeaders: ["Content-Type"], // 許可するヘッダー
+    origin: "*",
+    methods: ["GET", "POST", "PUT"], // PUT メソッドを追加
+    allowedHeaders: ["Content-Type"],
   })
 );
 app.use(express.json());
@@ -28,21 +28,55 @@ initializeApp({
 const db = getDatabase();
 const auth = getAuth();
 
-// React Native からの登録データを受け取り、AuthenticationとRealtime Databaseに保存
-app.post("/api/register", async (req, res) => {
+app.put("/api/user", async (req, res) => {
   try {
-    // リクエストボディからユーザー情報を取得
-    const { username, age, email, password, gender, stylePreference } = req.body;
+    // リクエストボディからデータを取得
+    const { uid, username, age, gender, stylePreference } = req.body;
 
-    // Firebase Authentication にユーザーを作成
-    const userRecord = await auth.createUser({
-      email,
-      password,
+    console.log(`ユーザー ${uid} の更新リクエストを受信しました`);
+
+    // 必須データのバリデーション
+    if (!uid || !username || !age || !gender || !stylePreference) {
+      return res.status(400).json({ error: "すべてのフィールドを入力してください。" });
+    }
+
+    const ageNumber = Number(age);
+    if (isNaN(ageNumber) || ageNumber <= 0) {
+      return res.status(400).json({ error: "年齢は正の数値である必要があります。" });
+    }
+
+    // Firebase Realtime Database の更新処理
+    const userRef = db.ref("users").child(uid);
+    const snapshot = await userRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "ユーザーが見つかりません。" });
+    }
+
+    // 更新処理
+    await userRef.update({
+      username,
+      age: ageNumber,
+      gender,
+      stylePreference,
+      updatedAt: new Date().toISOString(), // ISO 8601 フォーマット
     });
 
-    console.log("User created in Authentication:", userRecord.uid);
+    console.log(`ユーザー ${uid} の情報を正常に更新しました`);
+    res.status(200).json({ message: "ユーザー情報を更新しました。" });
+  } catch (error) {
+    console.error("ユーザー情報の更新中にエラーが発生しました:", error);
+    res.status(500).json({ error: "サーバー内部でエラーが発生しました。" });
+  }
+});
 
-    // Firebase Realtime Database に追加情報を保存
+
+// その他の既存エンドポイント
+app.post("/api/register", async (req, res) => {
+  try {
+    const { username, age, email, password, gender, stylePreference } = req.body;
+    const userRecord = await auth.createUser({ email, password });
+
     const userRef = db.ref("users").child(userRecord.uid);
     await userRef.set({
       username,
@@ -52,10 +86,9 @@ app.post("/api/register", async (req, res) => {
       createdAt: Date.now(),
     });
 
-    // `uid` を含むレスポンスを送信
     res.status(201).json({
       message: "User registered successfully",
-      uid: userRecord.uid, // UID をクライアントに返す
+      uid: userRecord.uid,
     });
   } catch (error) {
     console.error("Error registering user:", error);
@@ -66,8 +99,6 @@ app.post("/api/register", async (req, res) => {
 app.get("/api/user/:uid", async (req, res) => {
   try {
     const { uid } = req.params;
-
-    // Realtime Databaseからユーザー情報を取得
     const userRef = db.ref("users").child(uid);
     const snapshot = await userRef.once("value");
 
@@ -81,7 +112,6 @@ app.get("/api/user/:uid", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch user data" });
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);

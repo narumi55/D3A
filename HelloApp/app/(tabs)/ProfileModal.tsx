@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Modal, View, Text, Button, StyleSheet, ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
+import {
+  Modal,
+  View,
+  Text,
+  Button,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import { fetchUserData } from "../../src/api/userGet"; // fetchUserData をインポート
 
 interface ProfileModalProps {
@@ -17,6 +25,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, closeModal, uid })
   });
   const [loading, setLoading] = useState(true); // ローディング状態を管理
   const [error, setError] = useState<string | null>(null); // エラー状態を管理
+  const router = useRouter();
 
   // useEffect でユーザー情報を取得
   useEffect(() => {
@@ -78,6 +87,17 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, closeModal, uid })
             </>
           )}
 
+          <Button
+            title="編集"
+            onPress={() => {
+              if (uid) {
+                router.push({
+                  pathname: "../EditAccount",
+                  params: { uid }, // クエリパラメータとして uid を渡す
+                });
+              }
+            }}
+          />
           <Button title="閉じる" onPress={closeModal} />
         </View>
       </View>
@@ -111,3 +131,4 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileModal;
+
