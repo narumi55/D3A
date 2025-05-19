@@ -90,12 +90,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, closeModal, uid })
           <Button
             title="編集"
             onPress={() => {
-              if (uid) {
-                router.push({
-                  pathname: "../EditAccount",
-                  params: { uid }, // クエリパラメータとして uid を渡す
-                });
-              }
+              closeModal(); // モーダルを閉じる
+              router.push('/EditAccount'); 
             }}
           />
           <Button title="閉じる" onPress={closeModal} />

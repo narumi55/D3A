@@ -34,42 +34,7 @@ const serviceAccount = require("../firebaseServiceAccount.json");
 });
 const db = (0, database_1.getDatabase)();
 const auth = (0, auth_1.getAuth)();
-app.put("/api/user", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        // リクエストボディからデータを取得
-        const { uid, username, age, gender, stylePreference } = req.body;
-        console.log(`ユーザー ${uid} の更新リクエストを受信しました`);
-        // 必須データのバリデーション
-        if (!uid || !username || !age || !gender || !stylePreference) {
-            return res.status(400).json({ error: "すべてのフィールドを入力してください。" });
-        }
-        const ageNumber = Number(age);
-        if (isNaN(ageNumber) || ageNumber <= 0) {
-            return res.status(400).json({ error: "年齢は正の数値である必要があります。" });
-        }
-        // Firebase Realtime Database の更新処理
-        const userRef = db.ref("users").child(uid);
-        const snapshot = yield userRef.once("value");
-        if (!snapshot.exists()) {
-            return res.status(404).json({ error: "ユーザーが見つかりません。" });
-        }
-        // 更新処理
-        yield userRef.update({
-            username,
-            age: ageNumber,
-            gender,
-            stylePreference,
-            updatedAt: new Date().toISOString(), // ISO 8601 フォーマット
-        });
-        console.log(`ユーザー ${uid} の情報を正常に更新しました`);
-        res.status(200).json({ message: "ユーザー情報を更新しました。" });
-    }
-    catch (error) {
-        console.error("ユーザー情報の更新中にエラーが発生しました:", error);
-        res.status(500).json({ error: "サーバー内部でエラーが発生しました。" });
-    }
-}));
-// その他の既存エンドポイント
+
 app.post("/api/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { username, age, email, password, gender, stylePreference } = req.body;

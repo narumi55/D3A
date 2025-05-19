@@ -6,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import AccountModal from "./(tabs)/AccountModal"; // 別のモーダル用コンポーネント
 import ProfileModal from "./(tabs)/ProfileModal"; // 新しく遷移するモーダル用コンポーネント
 
-const App = () => {
+const index = () => {
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
@@ -96,4 +96,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default index;

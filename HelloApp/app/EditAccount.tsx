@@ -9,24 +9,33 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker"; // ドロップダウン用
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { editUserData } from "../src/api/userEdit";
 import { fetchUserData } from "../src/api/userGet";
+import { useRouter } from "expo-router";
 
-interface EditAccountProps {
-  uid: string;
-}
-
-const EditAccount: React.FC<EditAccountProps> = ({ uid }) => {
+const EditAccount: React.FC = () => {
+  const [uid, setUid] = useState<string | null>(null);
   const [username, setUsername] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("男性");
   const [stylePreference, setStylePreference] = useState("ベーシック");
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    const loadUserData = async () => {
+    const loadUidAndUserData = async () => {
       try {
-        const data = await fetchUserData(uid);
+        const storedUid = await AsyncStorage.getItem("userUid");
+        if (!storedUid) {
+          Alert.alert("エラー", "ユーザーIDが見つかりません。");
+          return;
+        }
+
+        setUid(storedUid);
+
+        // UID を使ってユーザー情報を取得
+        const data = await fetchUserData(storedUid);
         if (data) {
           setUsername(data.username || "");
           setAge(data.age ? String(data.age) : "");
@@ -40,10 +49,15 @@ const EditAccount: React.FC<EditAccountProps> = ({ uid }) => {
       }
     };
 
-    loadUserData();
-  }, [uid]);
+    loadUidAndUserData();
+  }, []);
 
   const handleSave = async () => {
+    if (!uid) {
+      Alert.alert("エラー", "ユーザーIDが取得できていません。");
+      return;
+    }
+
     if (!username || !age) {
       Alert.alert("入力エラー", "ユーザー名と年齢は必須です。");
       return;
@@ -56,18 +70,15 @@ const EditAccount: React.FC<EditAccountProps> = ({ uid }) => {
     }
 
     try {
-  const response = await editUserData({
+      await editUserData({
         uid,
         username,
-        age: ageNumber, // 数値に変換
+        age, // 数値に変換
         gender,
         stylePreference,
       });
-      if (response.success) {
-        Alert.alert("成功", "プロフィールを更新しました！");
-      } else {
-        Alert.alert("エラー", "更新に失敗しました。");
-      }
+
+      router.push("/");
     } catch (error) {
       Alert.alert("エラー", "サーバー通信中にエラーが発生しました。");
     }

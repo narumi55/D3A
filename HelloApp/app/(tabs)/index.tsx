@@ -1,8 +1,9 @@
 import React from "react";
 import TabLayout from "./_layout";
+import { View, Text, StyleSheet } from 'react-native';
 
-const Home = () => {
+const index = () => {
   return <TabLayout />;
 };
 
-export default Home;
+export default index;
